@@ -21,5 +21,5 @@ class ImageLoader:
     def normalize(self):
         for i in range(len(self.images)):
             image = self.images[i]
-            image2 = ( (image - image.min()) / (image.max() - image.min()) )
+            image2 = ( image / 255 )
             self.images[i] = image2
