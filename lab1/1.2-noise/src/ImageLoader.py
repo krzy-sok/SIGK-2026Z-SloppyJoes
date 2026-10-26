@@ -8,6 +8,7 @@ class ImageLoader:
     y = 0
 
     def __init__(self, x, y ):
+        self.images: list[np.ndarray] = []
         self.x = x
         self.y = y
 

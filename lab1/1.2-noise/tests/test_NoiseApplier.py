@@ -1,7 +1,8 @@
 import pytest
 from src.ImageLoader import ImageLoader
-from src.NoiseApllier import NoiseApplier
+from src.NoiseApplier import NoiseApplier
 import numpy as np
+
 
 def test_noise_count():
     loader = ImageLoader(0,0)
@@ -18,6 +19,7 @@ def test_noise_not_original():
     noiseApp = NoiseApplier(0.03)
     noiseApp.apply_noise(loader.images)
     for img_orig, img_noise in zip(loader.images, noiseApp.images):
+        assert(img_noise.shape == (255,255,3))
         assert( not np.array_equal(img_orig, img_noise))
 
 
