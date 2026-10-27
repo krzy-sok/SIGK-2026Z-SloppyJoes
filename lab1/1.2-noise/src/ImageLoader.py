@@ -15,7 +15,7 @@ class ImageLoader:
     def load_from_folder(self, path="./images"):
         files =  glob.glob(path+"/*.png")
         for file in files:
-            image: np.ndarray = skimage.io.imread(file)[self.y:self.y+255, self.x:self.x+255]
+            image: np.ndarray = skimage.io.imread(file)[self.y:self.y+256, self.x:self.x+256]
             self.images.append(image)
 
     def normalize(self):
