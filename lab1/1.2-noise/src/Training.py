@@ -1,6 +1,7 @@
 import gc
 
 from src.DenoiserUModel import DenoiserUmodel
+from . import Losses
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,7 +13,8 @@ class Trainer:
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.epochs = epochs
-        self.criterion = nn.MSELoss()
+        self.citerion = nn.MSELoss()
+        self.charbonier = Losses.CharbonnierLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=7, factor=0.5, threshold=1e-7, threshold_mode='abs')
 
@@ -26,24 +28,25 @@ class Trainer:
 
         for epoch in range(self.epochs):
             running_loss = 0.0
-            breakpoint()
-            for i, (noisy_images, clean_images) in enumerate(trainloader):
-                noisy_images, clean_images = noisy_images.to(self.device), clean_images.to(self.device)
+            # breakpoint()
+            for i, (noisy_image, clean_image) in enumerate(trainloader):
+                noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
 
                 # outputs = self.model(noisy_images)
-                outputs = self.model(noisy_images)
-                loss = self.criterion(outputs, clean_images)
+                outputs = self.model(noisy_image)
+                mse_loss = self.citerion(outputs, clean_image)
+                charb_loss = self.charbonier(outputs, clean_image)
+                loss = mse_loss + charb_loss
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
                 running_loss += loss.item()
 
-                del noisy_images, clean_images, outputs, loss
+                del noisy_image, clean_image, outputs, loss
                 torch.cuda.empty_cache()
 
-
-            epoch_loss = running_loss / len(noisy)
+            epoch_loss = running_loss / len(trainloader)
             losses.append(epoch_loss)
             print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Learning Rate: {self.optimizer.param_groups[0]["lr"]}')
 
