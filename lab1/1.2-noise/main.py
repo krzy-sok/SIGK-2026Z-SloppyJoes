@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 
 def main():
     model = DenoiserUmodel()
-    dataset =  ImageDataset("./images/DIV2K_train_LR_bicubic_X2", 0.03)
+    dataset =  ImageDataset("../../images/train", 0.03)
     trainer = Trainer(model, 0.01, 50)
     dataLoader = DataLoader(dataset, batch_size=32, shuffle=True)
-    breakpoint()
+    # breakpoint()
     losses = trainer._train_model(dataLoader)
-    breakpoint()
+    # breakpoint()
     plt.plot([x for x in range(len(losses))], losses)
     plt.savefig("./loss.png")
     plt.show()
+    breakpoint()
 
 
 if __name__ == "__main__":
