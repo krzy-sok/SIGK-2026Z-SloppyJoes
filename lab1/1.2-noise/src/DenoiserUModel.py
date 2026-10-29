@@ -36,17 +36,18 @@ class DenoiserUmodel(nn.Module):
         )
 
     def forward(self, x):
-        x = x.permute(0, 3, 1, 2)
         # x = x.permute(2, 0, 1).unsqueeze(0)
         # Encoder
         # try:
         e1 = self.enc1(x)
+        # breakpoint()
         e2 = self.enc2(self.pool(e1))
         e3 = self.enc3(self.pool(e2))
         e4 = self.enc4(self.pool(e3))
 
         # Decoder
         d1 = self.dec1(e4)
+        # breakpoint()
         d1 = torch.cat([e3, d1], dim=1)  # Skip connection
         d2 = self.dec2(d1)
         d2 = torch.cat([e2, d2], dim=1)  # Skip connection
@@ -56,4 +57,4 @@ class DenoiserUmodel(nn.Module):
         # except Exception as e:
         #     breakpoint()
 
-        return torch.sigmoid(d4) # Tanh activation for output
+        return torch.sigmoid(d4)
