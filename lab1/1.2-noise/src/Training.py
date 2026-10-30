@@ -11,10 +11,12 @@ class Trainer:
     def __init__(self, model: DenoiserUmodel , learning_rate, epochs):
         self.model = model
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print(f"Device used: {self.device}")
         self.model.to(self.device)
         self.epochs = epochs
         self.citerion = nn.MSELoss()
-        self.charbonier = Losses.CharbonnierLoss()
+        # self.citerion = Losses.FFDNetLoss()
+        # self.charbonier = Losses.CharbonnierLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=7, factor=0.5, threshold=1e-7, threshold_mode='abs')
 
@@ -34,9 +36,10 @@ class Trainer:
 
                 # outputs = self.model(noisy_images)
                 outputs = self.model(noisy_image)
-                mse_loss = self.citerion(outputs, clean_image)
-                charb_loss = self.charbonier(outputs, clean_image)
-                loss = mse_loss + charb_loss
+                # mse_loss = self.citerion(outputs, clean_image)
+                # charb_loss = self.charbonier(outputs, clean_image)
+                # loss = mse_loss + charb_loss
+                loss = self.citerion(outputs, clean_image)
                 loss.backward()
                 self.optimizer.step()
                 self.optimizer.zero_grad()
@@ -48,14 +51,14 @@ class Trainer:
 
             epoch_loss = running_loss / len(trainloader)
             losses.append(epoch_loss)
-            print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Learning Rate: {self.optimizer.param_groups[0]["lr"]}')
+            # print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Learning Rate: {self.optimizer.param_groups[0]["lr"]}')
 
             self.scheduler.step(epoch_loss)
-            print(f"Scheduler state: {self.scheduler.state_dict()}")
+            # print(f"Scheduler state: {self.scheduler.state_dict()}")
 
             torch.cuda.empty_cache()
             gc.collect()
-            print(f"Epoch {epoch} finished")
+            print(f"Epoch {epoch+1} finished")
 
         print('Finished Training')
         return losses
