@@ -8,7 +8,7 @@ import os
 class ImageDataset(Dataset):
     def __init__(self, image_path: str , noise_stddev):
         self.images = sorted([os.path.join(image_path, f) for f in os.listdir(image_path) if os.path.isfile(os.path.join(image_path, f))])
-        self.images = self.images[0:200]
+        self.images = self.images
         self.noise_stddev = noise_stddev
 
     def __len__(self):
