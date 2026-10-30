@@ -7,7 +7,11 @@ requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.11.2",
     "numpy>=2.5.4",
+    "pillow>=13.0.0",
     "pytest>=9.1.1",
     "scikit-image>=0.26.0",
+    "tabulate>=0.10.0",
     "torch>=2.14.1",
+    "torchmetrics>=1.9.0",
+    "torchvision>=0.29.2",
 ]
