@@ -14,8 +14,8 @@ class Trainer:
         print(f"Device used: {self.device}")
         self.model.to(self.device)
         self.epochs = epochs
-        self.citerion = nn.MSELoss()
-        # self.citerion = Losses.FFDNetLoss()
+        # self.citerion = nn.MSELoss()
+        self.citerion = Losses.FFDNetLoss()
         # self.charbonier = Losses.CharbonnierLoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=7, factor=0.5, threshold=1e-7, threshold_mode='abs')
@@ -31,10 +31,11 @@ class Trainer:
         for epoch in range(self.epochs):
             running_loss = 0.0
             # breakpoint()
-            for i, (noisy_image, clean_image) in enumerate(trainloader):
+            for i, (clean_image, noisy_image) in enumerate(trainloader):
                 noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
 
                 # outputs = self.model(noisy_images)
+                # with torch.no_grad():
                 outputs = self.model(noisy_image)
                 # mse_loss = self.citerion(outputs, clean_image)
                 # charb_loss = self.charbonier(outputs, clean_image)
