@@ -11,20 +11,16 @@ class ImageDataset(Dataset):
         self.images = self.images
         self.noise_stddev = noise_stddev
         self.slices= []
+        self.prepare_images()
 
     def __len__(self):
-        return len(self.images)
+          return len(self.slices)
+        # return len(self.images)
 
     def __getitem__(self, idx):
-        clean_image: Image = Image.open(self.images[idx]).convert("RGB")
+        # clean_image: Image = Image.open(self.images[idx]).convert("RGB")
         # .crop((0,0,256,256))
-        if len(self.slices) ==0:
-            for y in range(0, clean_image.size[1] - 256, 256):
-                for x in range(0, clean_image.size[0] - 256, 256):
-                    self.slices.append(clean_image.crop((x,y,x+256,y+256)))
-        # x = np.max((image.shape[1]/2)-256, 0)
-        # y = np.max((image.shape[0]/2)-256, 0)
-        clean_slice = self.slices.pop(0)
+        clean_slice = self.slices[idx]
         transform = transforms.ToTensor()
         image_normal = transform(clean_slice)
         noisy_img = self.ApplyNoise(image_normal)
@@ -34,3 +30,13 @@ class ImageDataset(Dataset):
         noise = torch.randn_like(image) * self.noise_stddev
         image_noise = (image + noise).clamp(0.0, 1.0)
         return image_noise
+
+    def prepare_images(self):
+        for i, image in enumerate(self.images):
+            len_prev = len(self.slices)
+            image = Image.open(image).convert("RGB")
+            for y in range(0, image.size[1] - 256, 256):
+                for x in range(0, image.size[0] - 256, 256):
+                    self.slices.append(image.crop((x,y,x+256,y+256)))
+            len_new = len(self.slices)
+            print(f"sliced image {i} into {len_new-len_prev}")
