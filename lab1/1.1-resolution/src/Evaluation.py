@@ -1,4 +1,5 @@
 import os
+import warnings
 import lpips
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +16,10 @@ class Evaluator:
             if device is not None
             else torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         )
-        self.lpips_fn = lpips.LPIPS(net=lpips_net, verbose=False).to(self.device)
+        # lpips uses depraceted torchvision API (pretrained=True), so silence the warning
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning, module="torchvision.models._utils")
+            self.lpips_fn = lpips.LPIPS(net=lpips_net, verbose=False).to(self.device)
         self.lpips_fn.eval()
 
     @staticmethod
@@ -33,7 +37,7 @@ class Evaluator:
         )
 
     def compute_lpips(self, clean_t: torch.Tensor, pred_t: torch.Tensor) -> float:
-        # tensors [B, 3, H, W] normalized to [-1, 1]
+        # expected tensors [B, 3, H, W] normalized to [-1, 1]
         with torch.no_grad():
             clean_norm = clean_t * 2.0 - 1.0
             pred_norm = pred_t * 2.0 - 1.0
@@ -150,7 +154,7 @@ class Evaluator:
 
     @staticmethod
     def format_results_table(results: dict[str, dict[str, float]]) -> str:
-        header = f"{'Metoda':<40} | {'SNE':>10} | {'PSNR':>8} | {'SSIM':>8} | {'LPIPS':>8}"
+        header = f"{'Method':<40} | {'SNE':>10} | {'PSNR':>8} | {'SSIM':>8} | {'LPIPS':>8}"
         sep = "-" * len(header)
         lines = [header, sep]
         for method, vals in results.items():
@@ -164,9 +168,10 @@ class Evaluator:
         validate_dir: str,
         model_32: SuperResolutionUModel,
         model_64: SuperResolutionUModel,
-        output_path: str = "./comparison_results.png",
+        output_path: str = "./image/results/comparison_results.png",
         image_idx: int = 0,
     ):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         files = sorted(
             [
                 os.path.join(validate_dir, f)
@@ -214,10 +219,10 @@ class Evaluator:
             mod_ssim = self.compute_ssim(clean_np, pred_np)
 
             axes[row, 0].imshow(clean_np)
-            axes[row, 0].set_title("Oryginał (256x256)")
+            axes[row, 0].set_title("Original (256x256)")
 
             axes[row, 1].imshow(low_res_np)
-            axes[row, 1].set_title(f"Wejście ({size}x{size})")
+            axes[row, 1].set_title(f"Input ({size}x{size})")
 
             axes[row, 2].imshow(bicubic_np)
             axes[row, 2].set_title(
@@ -226,7 +231,7 @@ class Evaluator:
 
             axes[row, 3].imshow(pred_np)
             axes[row, 3].set_title(
-                f"Nasz model U-Net ({size}->256)\nPSNR: {mod_psnr:.2f} | SSIM: {mod_ssim:.3f}"
+                f"Trained U-Net ({size}->256)\nPSNR: {mod_psnr:.2f} | SSIM: {mod_ssim:.3f}"
             )
 
             for col in range(4):

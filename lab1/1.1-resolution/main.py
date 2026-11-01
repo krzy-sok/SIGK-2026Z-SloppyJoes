@@ -8,14 +8,19 @@ from src.Training import Trainer
 
 TRAIN_DIR = "../../images/train"
 VALIDATE_DIR = "../../images/validate"
+WEIGHTS_DIR = "./weights"
+RESULTS_DIR = "./image/results"
 EPOCHS = 50
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 
 def train_or_load_model(low_res_size: int, force_retrain: bool = False) -> SuperResolutionUModel:
+    os.makedirs(WEIGHTS_DIR, exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+
     model = SuperResolutionUModel(output_size=256, use_residual=True)
     trainer = Trainer(model, learning_rate=LEARNING_RATE, epochs=EPOCHS)
-    weights_path = f"./model_{low_res_size}x{low_res_size}.pth"
+    weights_path = os.path.join(WEIGHTS_DIR, f"model_{low_res_size}x{low_res_size}.pth")
 
     if os.path.exists(weights_path) and not force_retrain:
         print(f"\n[Info] Found existing weights at {weights_path} – training skipped.")
@@ -35,7 +40,7 @@ def train_or_load_model(low_res_size: int, force_retrain: bool = False) -> Super
     plt.ylabel("Loss (MSE + Charbonnier)")
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    loss_plot_path = f"./loss_{low_res_size}x{low_res_size}.png"
+    loss_plot_path = os.path.join(RESULTS_DIR, f"loss_{low_res_size}x{low_res_size}.png")
     plt.savefig(loss_plot_path, dpi=150)
     plt.close()
     print(f"Loss function graph saved to {loss_plot_path}")
@@ -43,11 +48,14 @@ def train_or_load_model(low_res_size: int, force_retrain: bool = False) -> Super
     return model
 
 def main():
+    os.makedirs(WEIGHTS_DIR, exist_ok=True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+
     # model training for 32x32 and 64x64
     model_32 = train_or_load_model(low_res_size=32)
     model_64 = train_or_load_model(low_res_size=64)
     
-    print("\n=== Evaluation DIV2K ===")
+    print("\n=== Evaluation on DIV2K ===")
     evaluator = Evaluator()
 
     results_32 = evaluator.evaluate_resolution(VALIDATE_DIR, model_32, low_res_size=32)
@@ -58,16 +66,18 @@ def main():
 
     print("\n" + table_str + "\n")
 
-    with open("./results_table.txt", "w", encoding="utf-8") as f:
+    table_path = os.path.join(RESULTS_DIR, "results_table.txt")
+    with open(table_path, "w", encoding="utf-8") as f:
         f.write(table_str + "\n")
     print("Table of results saved to ./results_table.txt")
 
-    # save visual comparison
+    # save visual comparison as png
+    comparison_path = os.path.join(RESULTS_DIR, "comparison_results.png")
     evaluator.save_visual_comparison(
         VALIDATE_DIR,
         model_32=model_32,
         model_64=model_64,
-        output_path="./comparison_results.png",
+        output_path=comparison_path,
         image_idx=0,
     )
 

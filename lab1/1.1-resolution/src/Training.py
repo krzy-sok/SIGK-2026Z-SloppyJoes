@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from src.SuperResolutionModel import SuperResolutionUModel
 from . import Losses
+import os
 
 class Trainer:
     def __init__(self, model: SuperResolutionUModel, learning_rate: float, epochs: int):
@@ -78,6 +79,8 @@ class Trainer:
         return losses
 
     def save_model(self, path: str):
+        if os.path.dirname(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         torch.save(self.model.state_dict(), path)
         print(f"Model saved to {path}")
 
