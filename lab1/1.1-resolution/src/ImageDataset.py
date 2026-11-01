@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from torchvision import transforms
 from src.ResolutionScaler import ResolutionScaler
+
 
 class ImageDataset(Dataset):
     def __init__(self, image_path: str, low_res_size: int = 32, max_images: int | None = 200):
@@ -19,7 +19,6 @@ class ImageDataset(Dataset):
             self.images = self.images[:max_images]
         self.low_res_size = low_res_size
         self.scaler = ResolutionScaler(target_size=low_res_size)
-        self.transform = transforms.ToTensor()
 
     def __len__(self):
         return len(self.images)
@@ -28,14 +27,13 @@ class ImageDataset(Dataset):
         clean_pil = Image.open(self.images[idx]).convert("RGB").crop((0, 0, 256, 256))
         clean_np = np.asarray(clean_pil, dtype=np.float32) / 255.0
 
-        low_res_upscaled_np = self.apply_downscale(clean_np)
+        low_res_np = self.apply_downscale(clean_np)
 
         clean_tensor = torch.from_numpy(clean_np).permute(2, 0, 1).contiguous()
-        degraded_tensor = torch.from_numpy(low_res_upscaled_np).permute(2, 0, 1).contiguous()
+        low_res_tensor = torch.from_numpy(low_res_np).permute(2, 0, 1).contiguous()
 
-        return degraded_tensor, clean_tensor
+        return low_res_tensor, clean_tensor
 
     def apply_downscale(self, image: np.ndarray) -> np.ndarray:
         downscaled = self.scaler.downscale_single(image)
-        upscaled = self.scaler.upscale_bicubic_single(downscaled, output_size=256, max_val=1.0)
-        return upscaled.astype(np.float32)
+        return np.clip(downscaled, 0.0, 1.0).astype(np.float32)
