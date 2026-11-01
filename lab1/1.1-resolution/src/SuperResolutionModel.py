@@ -9,7 +9,7 @@ class SuperResolutionUModel(nn.Module):
         self.output_size = output_size
         self.use_residual = use_residual
 
-        # Encoder (wspólny rdzeń U-Net z zadaniem 2.2)
+        # Encoder
         self.enc1 = self.conv_block(3, 32)
         self.enc2 = self.conv_block(32, 64)
         self.enc3 = self.conv_block(64, 128)
@@ -41,8 +41,7 @@ class SuperResolutionUModel(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # Jeśli wejście jest mniejsze niż docelowe (np. 32x32 lub 64x64),
-        # warstwa wejściowa modelu skaluje tensor przestrzenny do (output_size, output_size)
+        # if input is 32x32 or 64x64, upscale it to output_size
         if x.shape[-2:] != (self.output_size, self.output_size):
             x_up = F.interpolate(
                 x,
