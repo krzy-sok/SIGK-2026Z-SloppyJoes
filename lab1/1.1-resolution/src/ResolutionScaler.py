@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 
-
 class ResolutionScaler:
     images: list[np.ndarray] = []
     upscaled_images: list[np.ndarray] = []
