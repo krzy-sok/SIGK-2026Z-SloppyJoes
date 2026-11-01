@@ -5,7 +5,6 @@ from PIL import Image
 from torch.utils.data import Dataset
 from src.ResolutionScaler import ResolutionScaler
 
-
 class ImageDataset(Dataset):
     def __init__(self, image_path: str, low_res_size: int = 32, max_images: int | None = 200):
         self.images = sorted(
