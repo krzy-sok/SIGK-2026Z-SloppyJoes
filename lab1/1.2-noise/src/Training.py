@@ -29,37 +29,34 @@ class Trainer:
         gc.collect()
 
         for epoch in range(self.epochs):
-            running_loss = 0.0
-            # breakpoint()
-            for i, (clean_image, noisy_image) in enumerate(trainloader):
-                noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
-
-                # outputs = self.model(noisy_images)
-                # with torch.no_grad():
-                outputs = self.model(noisy_image)
-                # mse_loss = self.citerion(outputs, clean_image)
-                # charb_loss = self.charbonier(outputs, clean_image)
-                # loss = mse_loss + charb_loss
-                loss = self.citerion(outputs, clean_image)
-                loss.backward()
-                self.optimizer.step()
-                self.optimizer.zero_grad()
-
-                running_loss += loss.item()
-
-                del noisy_image, clean_image, outputs, loss
-                torch.cuda.empty_cache()
-
-            epoch_loss = running_loss / len(trainloader)
+            epoch_loss = self.epoch(trainloader)
             losses.append(epoch_loss)
-            # print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Learning Rate: {self.optimizer.param_groups[0]["lr"]}')
-
-            self.scheduler.step(epoch_loss)
-            # print(f"Scheduler state: {self.scheduler.state_dict()}")
-
-            torch.cuda.empty_cache()
-            gc.collect()
             print(f"Epoch {epoch+1} finished")
+            print(f'Epoch {epoch + 1}, Loss: {epoch_loss}, Learning Rate: {self.optimizer.param_groups[0]["lr"]}')
 
         print('Finished Training')
         return losses
+
+    def epoch(self, trainloader):
+        running_loss = 0.0
+        for i, (clean_image, noisy_image) in enumerate(trainloader):
+            noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
+            outputs = self.model(noisy_image)
+            # mse_loss = self.citerion(outputs, clean_image)
+            # charb_loss = self.charbonier(outputs, clean_image)
+            # loss = mse_loss + charb_loss
+            loss = self.citerion(outputs, clean_image)
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+
+            running_loss += loss.item()
+
+            del noisy_image, clean_image, outputs, loss
+            torch.cuda.empty_cache()
+
+        epoch_loss = running_loss / len(trainloader)
+        self.scheduler.step(epoch_loss)
+        torch.cuda.empty_cache()
+        gc.collect()
+        return epoch_loss
