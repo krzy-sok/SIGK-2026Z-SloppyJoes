@@ -57,3 +57,12 @@ class PerceptualLoss(nn.Module):
             target_features = self.features(target)
 
         return self.criterion(pred_features, target_features)
+
+
+class FFDNetLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, denoised, clean):
+        # MSE averaged over all pixels and channels
+        return 0.5 * torch.mean((denoised - clean) ** 2)
