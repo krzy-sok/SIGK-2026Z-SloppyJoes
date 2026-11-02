@@ -39,4 +39,4 @@ class ImageDataset(Dataset):
                 for x in range(0, image.size[0] - 256, 256):
                     self.slices.append(image.crop((x,y,x+256,y+256)))
             len_new = len(self.slices)
-            print(f"sliced image {i} into {len_new-len_prev}")
+            # print(f"sliced image {i} into {len_new-len_prev}")
