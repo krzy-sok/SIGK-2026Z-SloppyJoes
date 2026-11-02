@@ -2,6 +2,7 @@ from torchmetrics.functional.image import peak_signal_noise_ratio, structural_si
 from skimage.restoration import denoise_bilateral
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Validator:
     def __init__(self, model):
@@ -25,8 +26,8 @@ class Validator:
             pred_model = self.model(noisy_image)
             pred_base = self.bilateral_denoise_batch(noisy_image)
             # breakpoint()
-            # if(i&1):
-            #     continue
+            if(i>90):
+                break
             print(f"validation on img {i+1}")
 
             psnr_noaction.append(peak_signal_noise_ratio(noisy_image, clean_image, data_range=1.0).item())
@@ -50,9 +51,29 @@ class Validator:
             # print("lpips done")
             torch.cuda.empty_cache()
 
-            if i >=80:
-                # out of gpu mem
-                break
+            if i ==81:
+                # breakpoint()
+                image__np_cl = torch.squeeze(clean_image).permute(1, 2, 0).detach().numpy()
+                image__np_noise = torch.squeeze(noisy_image).permute(1, 2, 0).detach().numpy()
+                image__np_unet = torch.squeeze(pred_model).permute(1, 2, 0).detach().numpy()
+                image__np_base = torch.squeeze(pred_base).permute(1, 2, 0).detach().numpy()
+
+                f, axarr = plt.subplots(2,2)
+                axarr[0][0].imshow(image__np_cl)
+                axarr[0][0].title.set_text("clean image")
+
+                axarr[0][1].imshow(image__np_noise)
+                axarr[0][1].title.set_text("noisy image")
+
+                axarr[1][0].imshow(image__np_base)
+                axarr[1][0].title.set_text("bilateral denoising")
+
+                axarr[1][1].imshow(image__np_unet)
+                axarr[1][1].title.set_text("unet denoising")
+                plt.savefig("./comparison.png")
+                # # out of gpu mem
+
+                # break
 
 
         # breakpoint()
