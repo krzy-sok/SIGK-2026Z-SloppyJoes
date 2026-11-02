@@ -1,6 +1,6 @@
 import gc
 
-from src.DenoiserUModel import DenoiserUmodel
+from src.Unet import Unet
 from . import Losses
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ import torch.optim as optim
 
 
 class Trainer:
-    def __init__(self, model: DenoiserUmodel , learning_rate, epochs):
+    def __init__(self, model: Unet , learning_rate, epochs):
         self.model = model
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"Device used: {self.device}")

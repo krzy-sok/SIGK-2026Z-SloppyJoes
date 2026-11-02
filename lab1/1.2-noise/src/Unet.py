@@ -1,9 +1,9 @@
 import torch.nn as nn
 import torch
 
-class DenoiserUmodel(nn.Module):
+class Unet(nn.Module):
     def __init__(self):
-        super(DenoiserUmodel, self).__init__()
+        super(Unet, self).__init__()
 
         self.enc1 = self.conv_block(3, 32)
         self.enc2 = self.conv_block(32, 64)

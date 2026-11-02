@@ -1,5 +1,5 @@
 from src.ImageDataset import ImageDataset
-from src.DenoiserUModel import DenoiserUmodel
+from src.Unet import Unet
 from src.Validator import Validator
 from torch.utils.data import DataLoader
 import torch
@@ -18,7 +18,7 @@ def main(arguments):
     parser.add_argument("--load_model", type=str, default ="")
     args = parser.parse_args(arguments[1:])
     noise_sigma = args.sigma
-    model = DenoiserUmodel()
+    model = Unet()
     if(args.load_model != ""):
         model.load_state_dict(torch.load(args.load_model, weights_only=True))
         model.eval()
