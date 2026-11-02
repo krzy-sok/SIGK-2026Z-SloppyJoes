@@ -69,4 +69,5 @@ class Unet(nn.Module):
         # except Exception as e:
         #     breakpoint()
 
-        return x - d4
+        # return torch.clamp(x - d4, 0, 1)
+        return d4
