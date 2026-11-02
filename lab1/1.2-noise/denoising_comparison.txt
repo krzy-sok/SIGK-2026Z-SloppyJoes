@@ -1,5 +1,5 @@
-model                                     PSNR      SSIM      LPIPS
--------------------------------------  -------  --------  ---------
-no model                               30.5862  0.74505   0.0929196
-skimage.restoration.denoise_bilateral  27.3438  0.750117  0.179886
-Unet                                   30.5861  0.745073  0.092928
+model                                     PSNR      SSIM    LPIPS
+-------------------------------------  -------  --------  -------
+no model                               30.6234  0.76975       nan
+skimage.restoration.denoise_bilateral  26.0831  0.726772      nan
+Unet                                   74.7638  0.999991      nan
