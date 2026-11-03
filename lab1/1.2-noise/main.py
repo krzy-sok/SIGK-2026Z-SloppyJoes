@@ -10,6 +10,8 @@ import sys
 import argparse
 import numpy as np
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def main(arguments):
     parser = argparse.ArgumentParser()
@@ -26,12 +28,9 @@ def main(arguments):
         dataset =  ImageDataset("../../images/train", noise_sigma)
         trainer = Trainer(model, 0.01, 20)
         dataLoader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers= 8)
-        # breakpoint()
-        torch.save(model.state_dict(), "./1.2-denoiser-model")
         losses = trainer._train_model(dataLoader)
-        # breakpoint()
+        torch.save(model.state_dict(), "./1.2-denoiser-model")
         plt.plot([x for x in range(len(losses))], losses)
-        # breakpoint()
         plt.savefig("./loss.png")
 
     print("validating model")
