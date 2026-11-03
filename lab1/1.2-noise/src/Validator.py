@@ -1,16 +1,20 @@
 from torchmetrics.functional.image import peak_signal_noise_ratio, structural_similarity_index_measure
-# learned_perceptual_image_patch_similarity
+from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 from skimage.restoration import denoise_bilateral
 import torch
-import numpy as np
+import numpy as np  
 import matplotlib.pyplot as plt
 
 class Validator:
-    def __init__(self, model):
+    def __init__(self, model, lpips_net):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.device)
+        self.lpips = LearnedPerceptualImagePatchSimilarity(
+            net_type=lpips_net,
+            normalize=True
+        ).to(self.device)
 
-    def getMetrics(self, validationLoader):
+    def getMetrics(self, validationLoader, images_out = False):
         psnr_noaction = []
         psnr_model = []
         psnr_base = []
@@ -29,48 +33,44 @@ class Validator:
             pred_model = self.model(noisy_image)
             img_model = clean_image - pred_model
             pred_base = self.bilateral_denoise_batch(noisy_image)
-            # breakpoint()
-            # if(i&1):
-            #     continue
+            img_model = torch.clamp(img_model, 0, 1)
+            
             print(f"validation on img {i+1}")
 
             psnr_noaction.append(peak_signal_noise_ratio(noisy_image, clean_image, data_range=1.0).item())
             psnr_model.append(peak_signal_noise_ratio(img_model, clean_image, data_range=1.0).item())
             psnr_base.append(peak_signal_noise_ratio(pred_base, clean_image, data_range=1.0).item())
-            # print("psnr done")
 
             ssim_noaction.append(structural_similarity_index_measure(noisy_image, clean_image, data_range=1.0).item())
             ssim_model.append(structural_similarity_index_measure(img_model, clean_image, data_range=1.0).item())
             ssim_base.append(structural_similarity_index_measure(pred_base, clean_image, data_range=1.0).item())
-            # print("ssim done")
 
-            # if(i==78):
-            #     breakpoint()
-            # lpips_noaction.append(learned_perceptual_image_patch_similarity(noisy_image, clean_image).item())
-            # # print("lpips noacition done")
-            # lpips_model.append(learned_perceptual_image_patch_similarity(img_model, clean_image).item())
-            # # print("lpips model done")
+            lpips_noaction.append(self.lpips(noisy_image, clean_image).item())
+            lpips_model.append(self.lpips(img_model, clean_image).item())
+            lpips_base.append(self.lpips(pred_base, clean_image).item())
 
-            # lpips_base.append(learned_perceptual_image_patch_similarity(pred_base, clean_image).item())
-            # print("lpips done")
             torch.cuda.empty_cache()
 
-            if i % 20 == 0:
+            if images_out and i % 20 == 0:
                 image__np_cl = torch.squeeze(clean_image).permute(1, 2, 0).cpu().detach().numpy()
                 image__np_noise = torch.squeeze(noisy_image).permute(1, 2, 0).cpu().detach().numpy()
                 image__np_unet = torch.squeeze(img_model).permute(1, 2, 0).cpu().detach().numpy()
                 image__np_base = torch.squeeze(pred_base).permute(1, 2, 0).cpu().detach().numpy()
 
                 f, axarr = plt.subplots(2,2)
+                axarr[0][0].axis('off')
                 axarr[0][0].imshow(image__np_cl)
                 axarr[0][0].title.set_text("clean image")
 
+                axarr[0][1].axis('off')
                 axarr[0][1].imshow(image__np_noise)
                 axarr[0][1].title.set_text("noisy image")
 
+                axarr[1][0].axis('off')
                 axarr[1][0].imshow(image__np_base)
                 axarr[1][0].title.set_text("bilateral denoising")
 
+                axarr[1][1].axis('off')
                 axarr[1][1].imshow(image__np_unet)
                 axarr[1][1].title.set_text("unet denoising")
                 plt.savefig(f"./comparison{i}.png")

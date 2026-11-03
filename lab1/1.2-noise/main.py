@@ -18,6 +18,8 @@ def main(arguments):
 
     parser.add_argument("--sigma",default=0.03, type=float)
     parser.add_argument("--load_model", type=str, default ="")
+    parser.add_argument("-show_images", action="store_true")
+    parser.add_argument("--lpips_net", default="vgg")
     args = parser.parse_args(arguments[1:])
     noise_sigma = args.sigma
     model = Unet()
@@ -35,16 +37,16 @@ def main(arguments):
 
     print("validating model")
     validationDataset = ImageDataset("../../images/validate", noise_sigma)
-    validator = Validator(model)
+    validator = Validator(model, args.lpips_net)
     validationLoader = DataLoader(validationDataset, batch_size=1, shuffle=True)
 
-    noaction_metrics, base_metrics, model_metrics  = validator.getMetrics(validationLoader)
+    noaction_metrics, base_metrics, model_metrics  = validator.getMetrics(validationLoader, args.show_images)
     # breakpoint()
     noaction_metrics = ["no model"] + [np.mean(x) for x in noaction_metrics]
     base_metrics= ["skimage.restoration.denoise_bilateral"] + [np.mean(x) for x in base_metrics]
     model_metrics= [model.__class__.__name__] + [np.mean(x) for x in model_metrics]
 
-    headers = ["model", "PSNR", "SSIM", "LPIPS"]
+    headers = ["model", "PSNR", "SSIM", f"LPIPS({args.lpips_net})"]
     table = tabulate([noaction_metrics ,base_metrics, model_metrics], headers= headers)
     print(table)
     with open("denoising_comparison.txt", "w", encoding="utf-8") as f:
