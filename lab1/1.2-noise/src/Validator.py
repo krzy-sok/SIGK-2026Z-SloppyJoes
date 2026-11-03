@@ -31,10 +31,10 @@ class Validator:
         for i, (clean_image, noisy_image) in enumerate(validationLoader):
             noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
             pred_model = self.model(noisy_image)
-            img_model = clean_image - pred_model
+            img_model = noisy_image - pred_model
             pred_base = self.bilateral_denoise_batch(noisy_image)
             img_model = torch.clamp(img_model, 0, 1)
-            
+
             print(f"validation on img {i+1}")
 
             psnr_noaction.append(peak_signal_noise_ratio(noisy_image, clean_image, data_range=1.0).item())
