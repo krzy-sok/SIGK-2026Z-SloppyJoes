@@ -73,7 +73,7 @@ class Validator:
                 axarr[1][1].axis('off')
                 axarr[1][1].imshow(image__np_unet)
                 axarr[1][1].title.set_text("unet denoising")
-                plt.savefig(f"./comparison{i}.png")
+                plt.savefig(f"./out_images/comparison{i}.png")
 
 
         # breakpoint()
