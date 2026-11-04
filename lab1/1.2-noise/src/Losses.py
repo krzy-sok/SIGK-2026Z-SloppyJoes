@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from torchvision.models import vgg16, VGG16_Weights
+from torchvision.models import vgg16
 
 class CharbonnierLoss(nn.Module):
     def __init__(self, eps = 1e-6):
@@ -13,50 +13,28 @@ class CharbonnierLoss(nn.Module):
 
 
 class PerceptualLoss(nn.Module):
-    def __init__(self, feature_layer=16):
+    def __init__(self, feature_layers=[3, 8, 15, 22]):
         super().__init__()
-
-        weights = VGG16_Weights.IMAGENET1K_V1
-        vgg = vgg16(weights=weights)
-
-        self.features = nn.Sequential(
-            *list(vgg.features.children())[:feature_layer]
-        )
-
-        self.features.eval()
-        for param in self.features.parameters():
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        vgg = vgg16(pretrained=True).features
+        for param in vgg.parameters():
             param.requires_grad = False
-
-        # ImageNet normalization for RGB inputs in [0, 1]
-        self.register_buffer(
-            "mean",
-            torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-        )
-        self.register_buffer(
-            "std",
-            torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
-        )
-
+            
+        self.vgg_layers = vgg.to(self.device)
+        self.feature_layers = feature_layers
         self.criterion = nn.L1Loss()
 
-    def train(self, mode=True):
-        # Keep the frozen feature extractor in evaluation mode
-        super().train(mode)
-        self.features.eval()
-        return self
-
-    def forward(self, pred, target):
-        # pred and target: [B, 3, H, W], values in [0, 1]
-        pred = (pred - self.mean) / self.std
-        target = (target - self.mean) / self.std
-
-        pred_features = self.features(pred)
-
-        # Target features need no gradient
-        with torch.no_grad():
-            target_features = self.features(target)
-
-        return self.criterion(pred_features, target_features)
+    def forward(self, x, y):
+        loss = 0.0
+        x_feats, y_feats = x, y
+        for i, layer in enumerate(self.vgg_layers):
+            x_feats = layer(x_feats)
+            y_feats = layer(y_feats)
+            if i in self.feature_layers:
+                loss += self.criterion(x_feats, y_feats)
+            if i == max(self.feature_layers):
+                break
+        return loss
 
 
 class FFDNetLoss(nn.Module):
