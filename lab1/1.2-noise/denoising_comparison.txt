@@ -1,5 +1,0 @@
-model                                     PSNR      SSIM    LPIPS(vgg)
--------------------------------------  -------  --------  ------------
-no model                               30.6225  0.769726   0.209554
-skimage.restoration.denoise_bilateral  26.0826  0.726789   0.323462
-Unet                                   82.8992  1          2.18797e-07
