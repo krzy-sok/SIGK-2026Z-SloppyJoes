@@ -1,0 +1,17 @@
+[project]
+name = "lab2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ksokol", email = "01178595@pw.edu.pl" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+lab2 = "lab2:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
