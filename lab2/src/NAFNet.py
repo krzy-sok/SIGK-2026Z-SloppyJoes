@@ -18,7 +18,7 @@ class NafBlock(nn.Module):
 
         self.layerNorm1 = LayerNorm2d(channels)
         self.conv1 = nn.Conv2d(in_channels=channels, out_channels=self.DW_channels, kernel_size=1, padding=0, stride=1)
-        self.conv2 = nn.Conv2d(in_channels=self.DW_channels, out_channels=self.DW_channels, kernel_size=3, padding=0, stride=1)
+        self.conv2 = nn.Conv2d(in_channels=self.DW_channels, out_channels=self.DW_channels, kernel_size=3, padding=1, stride=1, groups=self.DW_channels)
         self.gate = SimpleGate()
 
         self.sca = nn.Sequential(
@@ -46,7 +46,7 @@ class NafBlock(nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.gate(x)
-        x = self.sca(x)
+        x = x * self.sca(x)
         x = self.conv3(x)
 
         x = x * self.beta + original
@@ -121,9 +121,6 @@ class NafNet(nn.Module):
             x = decoder(x)
         x = self.finish(x)
         return x[:,:,:H,:W]
-
-
-
 
             
     def apply_padding(self, x):
