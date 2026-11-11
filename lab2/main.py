@@ -1,5 +1,8 @@
 import argparse
 import sys
+import numpy as np
+from tabulate import tabulate
+import torch
 from torch.utils.data import DataLoader
 from src import ImageDownloader, NikonDataset
 from src.NAFNet import NafNet
@@ -17,6 +20,9 @@ def main(arguments):
     parser.add_argument("--naf_down", type=list, default=[1,1,1,8])
     parser.add_argument("--naf_up", type=list, default=[1,1,1,1])
     parser.add_argument("--naf_mid", type=int, default=1)
+    parser.add_argument("--out_name", default=f"{datetime.datetime.now()}.torch")
+    parser.add_argument("--lpips_net", default="vgg")
+
 
     args = parser.parse_args(arguments[1:])
     if args.d:
@@ -53,16 +59,26 @@ def main(arguments):
 
     train_datataset = NikonDataset.ImageDataset(count = 80)
     train_loader = DataLoader(train_datataset, batch_size=10)
-    trainer = Trainer(model, learning_rate=0.01, epochs=50)
+    trainer = Trainer(model, learning_rate=0.001, epochs=50)
     losses = trainer.train_model(train_loader)
+    torch.save(model.state_dict(), f"./{args.out_name}")
+
     plt.plot(losses)
     plt.savefig(f"losses_{datetime.datetime.now()}.png")
 
-    validator = Validator(model) 
+    validator = Validator(model, args.lpips_net) 
     validation_datatset = NikonDataset.ImageDataset(count = 20, offset=80)
     validatiopn_loader = DataLoader(validation_datatset, batch_size=1)
-    validator.getMetrics(validatiopn_loader, images_out=True)    
+    noaction_metrics, model_metrics = validator.getMetrics(validatiopn_loader, images_out=True)    
 
+    noaction_metrics = ["no model"] + [np.mean(x) for x in noaction_metrics]
+    model_metrics= [model.__class__.__name__] + [np.mean(x) for x in model_metrics]
+
+    headers = ["model", "PSNR", "SSIM", f"LPIPS({args.lpips_net})"]
+    table = tabulate([noaction_metrics, model_metrics], headers= headers)
+    print(table)
+    with open(f"./{args.out_name}.txt", "w", encoding="utf-8") as f:
+        f.write(table)
 
 
 if __name__ == "__main__":
