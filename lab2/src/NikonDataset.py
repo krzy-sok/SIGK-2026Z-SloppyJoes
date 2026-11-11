@@ -26,6 +26,7 @@ class ImageDataset(Dataset):
         with rawpy.imread(path) as raw:
             clean_img = self.get_linear_image(raw)
             nikon_img = self.nikon_Transform(clean_img)
+            clean_img = self.convert_to_8bit(clean_img)
             # print("transforms done")
             # transform = transforms.ToTensor()
             # clean_transformed = transform(clean_img)
@@ -34,7 +35,7 @@ class ImageDataset(Dataset):
             clean = torch.from_numpy(clean_img).permute(2, 0, 1)
             nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
 
-            return nikon.float(), clean.float()
+            return clean.float() /255, nikon.float() /255
 
     def nikon_Transform(self: np.ndarray, image):
         image = self.reduce_exposure(image)
@@ -43,7 +44,8 @@ class ImageDataset(Dataset):
         # print("noise done")
         image = self.apply_gamma_correction(image)
         # print("gamma done")
-        return self.convert_to_8bit(image)
+        image = self.convert_to_8bit(image)
+        return image
 
 
     def reduce_exposure(self, image: np.ndarray, ev_shift =-3):
