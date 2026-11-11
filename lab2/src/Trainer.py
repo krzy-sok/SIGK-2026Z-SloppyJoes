@@ -37,34 +37,32 @@ class Trainer:
         running_loss = 0.0
         for i, (clean_image, noisy_image) in enumerate(trainloader):
             noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
-            target_noise = noisy_image - clean_image
-            outputs = self.model(noisy_image)
-            if epoch_num % 5 == 0 and i == 6:
-                # r_up = []
-                for c, name in enumerate(["R", "G", "B"]):
-                    r = outputs[:, c]
-
-                    print(
-                        f"{name}: mean={r.mean().item():.6f}, "
-                        f"std={r.std().item():.6f}, "
-                        f"min={r.min().item():.6f}, "
-                        f"max={r.max().item():.6f}"
-                    )
-            # mse_loss = self.citerion(outputs, clean_image)
-            # charb_loss = self.charbonier(outputs, clean_image)
-            # loss = mse_loss + charb_loss
-            loss = self.citerion(outputs, target_noise)
-            loss.backward()
-            self.optimizer.step()
+            
             self.optimizer.zero_grad()
+
+            pred = self.model(noisy_image)
+            # outputs = noisy_image + pred
+            outputs = pred
+
+            loss = self.citerion(outputs, clean_image)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(),
+                max_norm=1.0
+            )
+            self.optimizer.step()
+            
 
             running_loss += loss.item()
 
-            del noisy_image, clean_image, outputs, loss
-            torch.cuda.empty_cache()
+            # del noisy_image, clean_image, outputs, loss
 
+        print(
+            f"Prediction min: {pred.min().item():.4f}, "
+            f"Prediction max{pred.max().item():.4f}"
+        )
         epoch_loss = running_loss / len(trainloader)
         self.scheduler.step(epoch_loss)
-        torch.cuda.empty_cache()
-        gc.collect()
+        # torch.cuda.empty_cache()
+        # gc.collect()
         return epoch_loss
