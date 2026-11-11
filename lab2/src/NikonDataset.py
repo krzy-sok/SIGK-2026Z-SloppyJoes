@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import Dataset
 import numpy as np
 from torchvision import transforms
@@ -25,19 +26,23 @@ class ImageDataset(Dataset):
         with rawpy.imread(path) as raw:
             clean_img = self.get_linear_image(raw)
             nikon_img = self.nikon_Transform(clean_img)
-            print("transforms done")
-            transform = transforms.ToTensor()
-            clean_transformed = transform(clean_img)
-            nikon_transformed = transform(nikon_img)
-            return clean_img, nikon_img
+            # print("transforms done")
+            # transform = transforms.ToTensor()
+            # clean_transformed = transform(clean_img)
+            # nikon_transformed = transform(nikon_img)
+            # return clean_img, nikon_img
+            clean = torch.from_numpy(clean_img).permute(2, 0, 1)
+            nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
+
+            return nikon.float(), clean.float()
 
     def nikon_Transform(self: np.ndarray, image):
         image = self.reduce_exposure(image)
-        print("exposure done")
+        # print("exposure done")
         image = self.add_physical_noise(image)
-        print("noise done")
+        # print("noise done")
         image = self.apply_gamma_correction(image)
-        print("gamma done")
+        # print("gamma done")
         return self.convert_to_8bit(image)
 
 
@@ -82,4 +87,5 @@ class ImageDataset(Dataset):
             output_bps=16,
             half_size=True
         )
+        linear_16bit = linear_16bit[400:656, 400:656]
         return linear_16bit.astype(np.float32) / 65535.0
