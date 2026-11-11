@@ -2,13 +2,22 @@ import argparse
 import sys
 from torch.utils.data import DataLoader
 from src import ImageDownloader, NikonDataset
+from src.NAFNet import NafNet
+from src.Trainer import Trainer
+from src.Validator import Validator
 import matplotlib.pyplot as plt
+import datetime
 
 def main(arguments):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-d", action="store_true")
     parser.add_argument("--display_nikon_comp", action="store_true")
+    parser.add_argument("--model", type=str, default="nafnet")
+    parser.add_argument("--naf_down", type=list, default=[1,1,1,8])
+    parser.add_argument("--naf_up", type=list, default=[1,1,1,1])
+    parser.add_argument("--naf_mid", type=int, default=1)
+
     args = parser.parse_args(arguments[1:])
     if args.d:
         ImageDownloader.download_raise_nef("./RAISE_258.csv","./images", 100)
@@ -28,6 +37,32 @@ def main(arguments):
             axarr[1].title.set_text("noisy image")
 
             plt.show()
+            return
+    model = None
+
+    match(args.model):
+        case "nafnet":
+            model = NafNet(
+                down_blocks=args.naf_down,
+                up_blocks=args.naf_up,
+                middle_block_count=args.naf_mid
+            )
+        case _:
+            print("no model chosen. Please run again with --model parameter. Possible values: nafnet")
+            return
+
+    train_datataset = NikonDataset.ImageDataset(count = 80)
+    train_loader = DataLoader(train_datataset, batch_size=10)
+    trainer = Trainer(model, learning_rate=0.01, epochs=50)
+    losses = trainer.train_model(train_loader)
+    plt.plot(losses)
+    plt.savefig(f"losses_{datetime.datetime.now()}.png")
+
+    validator = Validator(model) 
+    validation_datatset = NikonDataset.ImageDataset(count = 20, offset=80)
+    validatiopn_loader = DataLoader(validation_datatset, batch_size=1)
+    validator.getMetrics(validatiopn_loader, images_out=True)    
+
 
 
 if __name__ == "__main__":
