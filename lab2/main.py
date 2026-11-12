@@ -65,6 +65,7 @@ def main(arguments):
 
     plt.plot(losses)
     plt.savefig(f"losses_{args.out_name}.png")
+    plt.close()
 
     validator = Validator(model, args.lpips_net)
     validation_dataset = NikonDataset.ImageDataset(count=20, offset=80, slice_images=False)

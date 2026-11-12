@@ -22,21 +22,22 @@ class ImageDataset(Dataset):
             limit = len(self.images)
         self.images = self.images[offset: limit]
         self.slices = []
-        for path in self.images:
+        for i, path in enumerate(self.images):
+            print(f"Loading & transforming RAW image {i+1}/{len(self.images)}: {os.path.basename(path)}...")
             with rawpy.imread(path) as raw:
                 gt_img = self.get_ground_truth(raw)
                 linear_img = self.get_linear_image(raw)
+                nikon_img = self.nikon_Transform(linear_img)
                 if slice_images:
-                    self.slice_image(gt_img, linear_img)
+                    self.slice_image(gt_img, nikon_img)
                 else:
-                    self.slices.append((gt_img, linear_img))
+                    self.slices.append((gt_img, nikon_img))
 
     def __len__(self):
         return len(self.slices)
 
     def __getitem__(self, idx):
-        clean_img, linear_img = self.slices[idx]
-        nikon_img = self.nikon_Transform(linear_img)
+        clean_img, nikon_img = self.slices[idx]
 
         clean = torch.from_numpy(clean_img).permute(2, 0, 1)
         nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
@@ -53,13 +54,13 @@ class ImageDataset(Dataset):
         image = self.convert_to_8bit(image)
         return image
 
-    def slice_image(self, gt_image: np.ndarray, linear_image: np.ndarray):
+    def slice_image(self, gt_image: np.ndarray, nikon_image: np.ndarray):
         # breakpoint()
-        for y in range(0, linear_image.shape[1] - 256, 256):
-            for x in range(0, linear_image.shape[0] - 256, 256):
+        for y in range(0, nikon_image.shape[1] - 256, 256):
+            for x in range(0, nikon_image.shape[0] - 256, 256):
                 self.slices.append((
                     gt_image[x:x+256, y:y+256],
-                    linear_image[x:x+256, y:y+256]
+                    nikon_image[x:x+256, y:y+256]
                 ))
 
     def reduce_exposure(self, image: np.ndarray, ev_shift =-3):

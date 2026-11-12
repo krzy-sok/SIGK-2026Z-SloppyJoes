@@ -21,6 +21,21 @@ class Validator:
         eq_uint8 = TF.equalize(img_uint8)
         return eq_uint8.float() / 255.0
 
+    def compute_lpips(self, img1: torch.Tensor, img2: torch.Tensor, tile_size: int = 512) -> float:
+        _, _, h, w = img1.shape
+        if h <= tile_size and w <= tile_size:
+            return self.lpips(img1, img2).item()
+        scores = []
+        weights = []
+        for r in range(0, h, tile_size):
+            for c in range(0, w, tile_size):
+                patch1 = img1[:, :, r:r+tile_size, c:c+tile_size]
+                patch2 = img2[:, :, r:r+tile_size, c:c+tile_size]
+                if patch1.shape[2] >= 32 and patch1.shape[3] >= 32:
+                    scores.append(self.lpips(patch1, patch2).item())
+                    weights.append(patch1.shape[2] * patch1.shape[3])
+        return float(np.average(scores, weights=weights))
+
     def getMetrics(self, validationLoader, images_out = False):
         self.model.eval()
 
@@ -60,9 +75,9 @@ class Validator:
                 ssim_baseline.append(structural_similarity_index_measure(img_baseline, clean_image, data_range=1.0).item())
                 ssim_model.append(structural_similarity_index_measure(img_model, clean_image, data_range=1.0).item())
 
-                lpips_noaction.append(self.lpips(noisy_image, clean_image).item())
-                lpips_baseline.append(self.lpips(img_baseline, clean_image).item())
-                lpips_model.append(self.lpips(img_model, clean_image).item())
+                lpips_noaction.append(self.compute_lpips(noisy_image, clean_image))
+                lpips_baseline.append(self.compute_lpips(img_baseline, clean_image))
+                lpips_model.append(self.compute_lpips(img_model, clean_image))
 
                 if images_out:
                     image_np_cl = torch.squeeze(clean_image).permute(1, 2, 0).cpu().detach().numpy()
