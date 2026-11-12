@@ -20,7 +20,7 @@ def main(arguments):
     parser.add_argument("--naf_down", type=list, default=[1,1,1,8])
     parser.add_argument("--naf_up", type=list, default=[1,1,1,1])
     parser.add_argument("--naf_mid", type=int, default=1)
-    parser.add_argument("--out_name", default=f"{datetime.datetime.now()}.torch")
+    parser.add_argument("--out_name", default=f"{datetime.datetime.now().strftime("%d/%m/%Y_%H-%M-%S")}.torch")
     parser.add_argument("--lpips_net", default="vgg")
 
 
@@ -64,12 +64,12 @@ def main(arguments):
     torch.save(model.state_dict(), f"./{args.out_name}")
 
     plt.plot(losses)
-    plt.savefig(f"losses_{datetime.datetime.now()}.png")
+    plt.savefig(f"losses_{args.out_name}.png")
 
-    validator = Validator(model, args.lpips_net) 
+    validator = Validator(model, args.lpips_net)
     validation_datatset = NikonDataset.ImageDataset(count = 20, offset=80)
     validatiopn_loader = DataLoader(validation_datatset, batch_size=1)
-    noaction_metrics, model_metrics = validator.getMetrics(validatiopn_loader, images_out=True)    
+    noaction_metrics, model_metrics = validator.getMetrics(validatiopn_loader, images_out=True)
 
     noaction_metrics = ["no model"] + [np.mean(x) for x in noaction_metrics]
     model_metrics= [model.__class__.__name__] + [np.mean(x) for x in model_metrics]
