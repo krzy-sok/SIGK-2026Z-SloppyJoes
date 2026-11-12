@@ -23,7 +23,6 @@ def main(arguments):
     parser.add_argument("--out_name", default=f"{datetime.datetime.now().strftime("%d/%m/%Y_%H-%M-%S")}.torch")
     parser.add_argument("--lpips_net", default="vgg")
 
-
     args = parser.parse_args(arguments[1:])
     if args.d:
         ImageDownloader.download_raise_nef("./RAISE_258.csv","./images", 30)
@@ -35,11 +34,11 @@ def main(arguments):
         for img_clean, img_nikon in image_loader:
             f, axarr = plt.subplots(1,2)
             axarr[0].axis('off')
-            axarr[0].imshow(img_clean[0])
+            axarr[0].imshow(img_clean[0].permute(1, 2, 0))
             axarr[0].title.set_text("clean image")
 
             axarr[1].axis('off')
-            axarr[1].imshow(img_nikon[0])
+            axarr[1].imshow(img_nikon[0].permute(1, 2, 0))
             axarr[1].title.set_text("noisy image")
 
             plt.show()
@@ -79,7 +78,6 @@ def main(arguments):
     print(table)
     with open(f"./{args.out_name}.txt", "w", encoding="utf-8") as f:
         f.write(table)
-
 
 if __name__ == "__main__":
     main(sys.argv)

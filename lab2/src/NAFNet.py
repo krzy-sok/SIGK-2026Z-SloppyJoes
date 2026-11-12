@@ -8,7 +8,7 @@ class SimpleGate(nn.Module):
         x1, x2 = x.chunk(2, dim=1)
         return x1 * x2
 
- 
+
 class NafBlock(nn.Module):
     def __init__(self, channels, DW_expand=2, FFN_expand = 2, drop_rate =0):
         super(NafBlock, self).__init__()
@@ -122,7 +122,6 @@ class NafNet(nn.Module):
         x = self.finish(x)
         return x[:,:,:H,:W]
 
-            
     def apply_padding(self, x):
         _, _, h, w = x.size()
         mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size

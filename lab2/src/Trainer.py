@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.optim as optim
 
 
-
 class Trainer:
     def __init__(self, model: nn.Module , learning_rate, epochs):
         self.model = model
@@ -57,11 +56,11 @@ class Trainer:
             running_loss += loss.item()
 
             # del noisy_image, clean_image, outputs, loss
-        # breakpoint()
-        print(
-            f"Prediction min: {pred.min().item():.4f}, "
-            f"Prediction max{pred.max().item():.4f}"
-        )
+            # breakpoint()
+            print(
+                f"Prediction min: {outputs.min().item():.4f}, "
+                f"Prediction max{outputs.max().item():.4f}"
+            )
         epoch_loss = running_loss / len(trainloader)
         self.scheduler.step(epoch_loss)
         # torch.cuda.empty_cache()

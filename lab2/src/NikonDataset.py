@@ -19,29 +19,23 @@ class ImageDataset(Dataset):
         self.slices = []
         for path in self.images:
             with rawpy.imread(path) as raw:
-                self.slice_image(self.get_linear_image(raw))
+                gt_img = self.get_ground_truth(raw)
+                linear_img = self.get_linear_image(raw)
+                self.slice_image(gt_img, linear_img)
 
     def __len__(self):
         return len(self.slices)
 
     def __getitem__(self, idx):
-        # path  = self.images[idx]
-        clean_img = self.slices[idx]
-        # with rawpy.imread(path) as raw:
-        # clean_img = self.get_linear_image(raw)
-        nikon_img = self.nikon_Transform(clean_img)
-        clean_img = self.convert_to_8bit(clean_img)
-        # print("transforms done")
-        # transform = transforms.ToTensor()
-        # clean_transformed = transform(clean_img)
-        # nikon_transformed = transform(nikon_img)
-        # return clean_img, nikon_img
+        clean_img, linear_img = self.slices[idx]
+        nikon_img = self.nikon_Transform(linear_img)
+
         clean = torch.from_numpy(clean_img).permute(2, 0, 1)
         nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
 
-        return clean.float() /255, nikon.float() /255
+        return clean.float() / 255.0, nikon.float() / 255.0
 
-    def nikon_Transform(self: np.ndarray, image):
+    def nikon_Transform(self, image: np.ndarray):
         image = self.reduce_exposure(image)
         # print("exposure done")
         image = self.add_physical_noise(image)
@@ -51,13 +45,14 @@ class ImageDataset(Dataset):
         image = self.convert_to_8bit(image)
         return image
 
-
-    def slice_image(self, image: np.ndarray):
+    def slice_image(self, gt_image: np.ndarray, linear_image: np.ndarray):
         # breakpoint()
-        for y in range(0, image.shape[1] - 256, 256):
-            for x in range(0, image.shape[0] - 256, 256):
-                self.slices.append(image[x:x+256,y:y+256])
-
+        for y in range(0, linear_image.shape[1] - 256, 256):
+            for x in range(0, linear_image.shape[0] - 256, 256):
+                self.slices.append((
+                    gt_image[x:x+256, y:y+256],
+                    linear_image[x:x+256, y:y+256]
+                ))
 
     def reduce_exposure(self, image: np.ndarray, ev_shift =-3):
         """
@@ -65,7 +60,6 @@ class ImageDataset(Dataset):
         """
         ev_linear = np.pow(2.0, ev_shift)
         return np.clip(image * ev_linear, 0, 1)
-
 
     def add_physical_noise(self, linear_img: np.ndarray, alpha=0.001, sigma=0.005):
         """
@@ -77,15 +71,19 @@ class ImageDataset(Dataset):
         noisy_img += np.random.normal(0, sigma, linear_img.shape)
         return np.clip(noisy_img, 0.0, 1.0)
 
-
     def apply_gamma_correction(self, image: np.ndarray, gamma=2.2):
         im_gamma = 1/gamma
         return np.clip(np.pow(image, im_gamma), 0, 1)
 
-
     def convert_to_8bit(self, image: np.ndarray):
         return (image * 255).astype(np.uint8)
 
+    def get_ground_truth(self, raw):
+        """
+        Generates the properly exposed, full-color sRGB image (Ground Truth).
+        half_size=True is used to speed up processing during training/experiments.
+        """
+        return raw.postprocess(use_camera_wb=True, half_size=True)
 
     def get_linear_image(self, raw):
         """
