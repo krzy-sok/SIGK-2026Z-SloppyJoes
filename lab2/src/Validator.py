@@ -27,9 +27,10 @@ class Validator:
         for i, (clean_image, noisy_image) in enumerate(validationLoader):
             noisy_image, clean_image = noisy_image.to(self.device), clean_image.to(self.device)
             pred_model = self.model(noisy_image)
-            img_model = pred_model
-            img_model = torch.clamp(img_model, 0, 1)
-
+            img_model = noisy_image + pred_model
+            # img_model = pred_model
+            img_model = img_model.clamp(0,1)
+            # breakpoint()
             print(f"validation on img {i+1}")
 
             psnr_noaction.append(peak_signal_noise_ratio(noisy_image, clean_image, data_range=1.0).item())
@@ -40,8 +41,6 @@ class Validator:
 
             lpips_noaction.append(self.lpips(noisy_image, clean_image).item())
             lpips_model.append(self.lpips(img_model, clean_image).item())
-
-            torch.cuda.empty_cache()
 
             if images_out:
                 image__np_cl = torch.squeeze(clean_image).permute(1, 2, 0).cpu().detach().numpy()

@@ -12,30 +12,34 @@ class ImageDataset(Dataset):
              in os.listdir(image_path)
              if os.path.isfile(os.path.join(image_path, f))  and ".NEF" in f]
              )
-
         limit = offset+count
         if limit > len(self.images):
             limit = len(self.images)
         self.images = self.images[offset: limit]
+        self.slices = []
+        for path in self.images:
+            with rawpy.imread(path) as raw:
+                self.slice_image(self.get_linear_image(raw))
 
     def __len__(self):
-        return len(self.images)
+        return len(self.slices)
 
     def __getitem__(self, idx):
-        path  = self.images[idx]
-        with rawpy.imread(path) as raw:
-            clean_img = self.get_linear_image(raw)
-            nikon_img = self.nikon_Transform(clean_img)
-            clean_img = self.convert_to_8bit(clean_img)
-            # print("transforms done")
-            # transform = transforms.ToTensor()
-            # clean_transformed = transform(clean_img)
-            # nikon_transformed = transform(nikon_img)
-            # return clean_img, nikon_img
-            clean = torch.from_numpy(clean_img).permute(2, 0, 1)
-            nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
+        # path  = self.images[idx]
+        clean_img = self.slices[idx]
+        # with rawpy.imread(path) as raw:
+        # clean_img = self.get_linear_image(raw)
+        nikon_img = self.nikon_Transform(clean_img)
+        clean_img = self.convert_to_8bit(clean_img)
+        # print("transforms done")
+        # transform = transforms.ToTensor()
+        # clean_transformed = transform(clean_img)
+        # nikon_transformed = transform(nikon_img)
+        # return clean_img, nikon_img
+        clean = torch.from_numpy(clean_img).permute(2, 0, 1)
+        nikon = torch.from_numpy(nikon_img).permute(2, 0, 1)
 
-            return clean.float() /255, nikon.float() /255
+        return clean.float() /255, nikon.float() /255
 
     def nikon_Transform(self: np.ndarray, image):
         image = self.reduce_exposure(image)
@@ -46,6 +50,13 @@ class ImageDataset(Dataset):
         # print("gamma done")
         image = self.convert_to_8bit(image)
         return image
+
+
+    def slice_image(self, image: np.ndarray):
+        # breakpoint()
+        for y in range(0, image.shape[1] - 256, 256):
+            for x in range(0, image.shape[0] - 256, 256):
+                self.slices.append(image[x:x+256,y:y+256])
 
 
     def reduce_exposure(self, image: np.ndarray, ev_shift =-3):
@@ -89,5 +100,5 @@ class ImageDataset(Dataset):
             output_bps=16,
             half_size=True
         )
-        linear_16bit = linear_16bit[400:656, 400:656]
+        # linear_16bit = linear_16bit[400:656, 400:656]
         return linear_16bit.astype(np.float32) / 65535.0

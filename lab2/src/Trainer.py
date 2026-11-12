@@ -41,8 +41,9 @@ class Trainer:
             self.optimizer.zero_grad()
 
             pred = self.model(noisy_image)
-            # outputs = noisy_image + pred
-            outputs = pred
+            # breakpoint()
+            outputs = noisy_image + pred
+            # outputs = pred
 
             loss = self.citerion(outputs, clean_image)
             loss.backward()
@@ -56,7 +57,7 @@ class Trainer:
             running_loss += loss.item()
 
             # del noisy_image, clean_image, outputs, loss
-
+        # breakpoint()
         print(
             f"Prediction min: {pred.min().item():.4f}, "
             f"Prediction max{pred.max().item():.4f}"

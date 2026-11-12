@@ -26,7 +26,7 @@ def main(arguments):
 
     args = parser.parse_args(arguments[1:])
     if args.d:
-        ImageDownloader.download_raise_nef("./RAISE_258.csv","./images", 100)
+        ImageDownloader.download_raise_nef("./RAISE_258.csv","./images", 30)
         return
 
     if args.display_nikon_comp:
@@ -57,7 +57,7 @@ def main(arguments):
             print("no model chosen. Please run again with --model parameter. Possible values: nafnet")
             return
 
-    train_datataset = NikonDataset.ImageDataset(count = 80)
+    train_datataset = NikonDataset.ImageDataset(count = 40)
     train_loader = DataLoader(train_datataset, batch_size=10)
     trainer = Trainer(model, learning_rate=0.001, epochs=50)
     losses = trainer.train_model(train_loader)
