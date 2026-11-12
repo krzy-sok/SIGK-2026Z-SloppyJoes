@@ -69,13 +69,14 @@ def main(arguments):
     validator = Validator(model, args.lpips_net)
     validation_dataset = NikonDataset.ImageDataset(count=20, offset=80)
     validation_loader = DataLoader(validation_dataset, batch_size=1)
-    noaction_metrics, model_metrics = validator.getMetrics(validation_loader, images_out=True)
+    noaction_metrics, baseline_metrics, model_metrics = validator.getMetrics(validation_loader, images_out=True)
 
     noaction_metrics = ["no model"] + [np.mean(x) for x in noaction_metrics]
-    model_metrics= [model.__class__.__name__] + [np.mean(x) for x in model_metrics]
+    baseline_metrics = ["baseline"] + [np.mean(x) for x in baseline_metrics]
+    model_metrics = [model.__class__.__name__] + [np.mean(x) for x in model_metrics]
 
-    headers = ["model", "PSNR", "SSIM", f"LPIPS({args.lpips_net})"]
-    table = tabulate([noaction_metrics, model_metrics], headers= headers)
+    headers = ["Metoda", "PSNR", "SSIM", f"LPIPS({args.lpips_net})"]
+    table = tabulate([noaction_metrics, baseline_metrics, model_metrics], headers=headers)
     print(table)
     with open(f"./{args.out_name}.txt", "w", encoding="utf-8") as f:
         f.write(table)
