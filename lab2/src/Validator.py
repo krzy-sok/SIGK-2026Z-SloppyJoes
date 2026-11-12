@@ -61,7 +61,6 @@ class Validator:
                 axarr[2].title.set_text("NafNet")
                 plt.savefig(f"./out_images/comparison{i}.png")
 
-
         # breakpoint()
         return (
             [psnr_noaction, ssim_noaction, lpips_noaction],

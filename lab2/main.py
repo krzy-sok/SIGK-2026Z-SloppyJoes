@@ -16,16 +16,17 @@ def main(arguments):
 
     parser.add_argument("-d", action="store_true")
     parser.add_argument("--display_nikon_comp", action="store_true")
+    parser.add_argument("--gpu", action="store_true", help="Wymuś uruchomienie na GPU (CUDA)")
     parser.add_argument("--model", type=str, default="nafnet")
     parser.add_argument("--naf_down", type=list, default=[1,1,1,8])
     parser.add_argument("--naf_up", type=list, default=[1,1,1,1])
     parser.add_argument("--naf_mid", type=int, default=1)
-    parser.add_argument("--out_name", default=f"{datetime.datetime.now().strftime("%d/%m/%Y_%H-%M-%S")}.torch")
+    parser.add_argument("--out_name", default=f"{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.torch")
     parser.add_argument("--lpips_net", default="vgg")
 
     args = parser.parse_args(arguments[1:])
     if args.d:
-        ImageDownloader.download_raise_nef("./RAISE_258.csv","./images", 30)
+        ImageDownloader.download_raise_nef("./RAISE_258.csv", "./images", 100)
         return
 
     if args.display_nikon_comp:
@@ -56,9 +57,9 @@ def main(arguments):
             print("no model chosen. Please run again with --model parameter. Possible values: nafnet")
             return
 
-    train_datataset = NikonDataset.ImageDataset(count = 40)
-    train_loader = DataLoader(train_datataset, batch_size=10)
-    trainer = Trainer(model, learning_rate=0.001, epochs=50)
+    train_dataset = NikonDataset.ImageDataset(count=80, offset=0)
+    train_loader = DataLoader(train_dataset, batch_size=10)
+    trainer = Trainer(model, learning_rate=0.001, epochs=50, force_gpu=args.gpu)
     losses = trainer.train_model(train_loader)
     torch.save(model.state_dict(), f"./{args.out_name}")
 
@@ -66,9 +67,9 @@ def main(arguments):
     plt.savefig(f"losses_{args.out_name}.png")
 
     validator = Validator(model, args.lpips_net)
-    validation_datatset = NikonDataset.ImageDataset(count = 20, offset=80)
-    validatiopn_loader = DataLoader(validation_datatset, batch_size=1)
-    noaction_metrics, model_metrics = validator.getMetrics(validatiopn_loader, images_out=True)
+    validation_dataset = NikonDataset.ImageDataset(count=20, offset=80)
+    validation_loader = DataLoader(validation_dataset, batch_size=1)
+    noaction_metrics, model_metrics = validator.getMetrics(validation_loader, images_out=True)
 
     noaction_metrics = ["no model"] + [np.mean(x) for x in noaction_metrics]
     model_metrics= [model.__class__.__name__] + [np.mean(x) for x in model_metrics]

@@ -12,8 +12,13 @@ class ImageDataset(Dataset):
              in os.listdir(image_path)
              if os.path.isfile(os.path.join(image_path, f))  and ".NEF" in f]
              )
-        limit = offset+count
+        limit = offset + count
         if limit > len(self.images):
+            print(
+                f"Uwaga: Żądano obrazów [{offset}:{offset+count}], "
+                f"ale w '{image_path}' znaleziono tylko {len(self.images)} plików .NEF. "
+                f"Uruchom program z flagą '-d', aby pobrać pełny zestaw 100 zdjęć."
+            )
             limit = len(self.images)
         self.images = self.images[offset: limit]
         self.slices = []

@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-
 class Trainer:
-    def __init__(self, model: nn.Module , learning_rate, epochs):
+    def __init__(self, model: nn.Module, learning_rate, epochs, force_gpu=False):
         self.model = model
+        if force_gpu and not torch.cuda.is_available():
+            raise RuntimeError("Wymuszono użycie GPU (--gpu), ale CUDA nie jest dostępna!")
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"Device used: {self.device}")
         self.model.to(self.device)
@@ -51,16 +52,15 @@ class Trainer:
                 max_norm=1.0
             )
             self.optimizer.step()
-            
 
             running_loss += loss.item()
 
             # del noisy_image, clean_image, outputs, loss
-            # breakpoint()
-            print(
-                f"Prediction min: {outputs.min().item():.4f}, "
-                f"Prediction max{outputs.max().item():.4f}"
-            )
+        # breakpoint()
+        print(
+            f"Prediction min: {outputs.min().item():.4f}, "
+            f"Prediction max: {outputs.max().item():.4f}"
+        )
         epoch_loss = running_loss / len(trainloader)
         self.scheduler.step(epoch_loss)
         # torch.cuda.empty_cache()
