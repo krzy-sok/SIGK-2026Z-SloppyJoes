@@ -6,7 +6,7 @@ import rawpy
 import os
 
 class ImageDataset(Dataset):
-    def __init__(self, image_path: str = "./images", offset = 0, count = 100):
+    def __init__(self, image_path: str = "./images", offset = 0, count = 100, slice_images: bool = True):
         self.images = sorted(
             [os.path.join(image_path, f) for f
              in os.listdir(image_path)
@@ -26,7 +26,10 @@ class ImageDataset(Dataset):
             with rawpy.imread(path) as raw:
                 gt_img = self.get_ground_truth(raw)
                 linear_img = self.get_linear_image(raw)
-                self.slice_image(gt_img, linear_img)
+                if slice_images:
+                    self.slice_image(gt_img, linear_img)
+                else:
+                    self.slices.append((gt_img, linear_img))
 
     def __len__(self):
         return len(self.slices)

@@ -30,8 +30,8 @@ def main(arguments):
         return
 
     if args.display_nikon_comp:
-        image_dataset = NikonDataset.ImageDataset(count = 1)
-        image_loader = DataLoader(image_dataset,batch_size=1)
+        image_dataset = NikonDataset.ImageDataset(count=1, slice_images=False)
+        image_loader = DataLoader(image_dataset, batch_size=1)
         for img_clean, img_nikon in image_loader:
             f, axarr = plt.subplots(1,2)
             axarr[0].axis('off')
@@ -57,7 +57,7 @@ def main(arguments):
             print("no model chosen. Please run again with --model parameter. Possible values: nafnet")
             return
 
-    train_dataset = NikonDataset.ImageDataset(count=80, offset=0)
+    train_dataset = NikonDataset.ImageDataset(count=80, offset=0, slice_images=True)
     train_loader = DataLoader(train_dataset, batch_size=10)
     trainer = Trainer(model, learning_rate=0.001, epochs=50, force_gpu=args.gpu)
     losses = trainer.train_model(train_loader)
@@ -67,7 +67,7 @@ def main(arguments):
     plt.savefig(f"losses_{args.out_name}.png")
 
     validator = Validator(model, args.lpips_net)
-    validation_dataset = NikonDataset.ImageDataset(count=20, offset=80)
+    validation_dataset = NikonDataset.ImageDataset(count=20, offset=80, slice_images=False)
     validation_loader = DataLoader(validation_dataset, batch_size=1)
     noaction_metrics, baseline_metrics, model_metrics = validator.getMetrics(validation_loader, images_out=True)
 
