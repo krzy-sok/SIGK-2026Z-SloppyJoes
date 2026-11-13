@@ -2,6 +2,7 @@ import gc
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torchmetrics.functional.image import structural_similarity_index_measure
 
 class Trainer:
     def __init__(self, model: nn.Module, learning_rate, epochs, force_gpu=False):
@@ -14,7 +15,7 @@ class Trainer:
         self.epochs = epochs
         self.citerion = nn.L1Loss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', patience=7, factor=0.5, threshold=1e-7, threshold_mode='abs')
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=epochs, eta_min=1e-5)
 
     def train_model(self, trainloader):
         print("Training with Adam optimizer...")
@@ -42,10 +43,12 @@ class Trainer:
 
             pred = self.model(noisy_image)
             # breakpoint()
-            outputs = noisy_image + pred
+            outputs = torch.clamp(noisy_image + pred, 0.0, 1.0)
             # outputs = pred
 
-            loss = self.citerion(outputs, clean_image)
+            l1_loss = self.citerion(outputs, clean_image)
+            ssim_loss = 1.0 - structural_similarity_index_measure(outputs, clean_image, data_range=1.0)
+            loss = 0.8 * l1_loss + 0.2 * ssim_loss
             loss.backward()
             torch.nn.utils.clip_grad_norm_(
                 self.model.parameters(),
@@ -62,7 +65,7 @@ class Trainer:
             f"Prediction max: {outputs.max().item():.4f}"
         )
         epoch_loss = running_loss / len(trainloader)
-        self.scheduler.step(epoch_loss)
+        self.scheduler.step()
         # torch.cuda.empty_cache()
         # gc.collect()
         return epoch_loss

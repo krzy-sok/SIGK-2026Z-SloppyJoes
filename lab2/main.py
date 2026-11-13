@@ -58,7 +58,7 @@ def main(arguments):
             return
 
     train_dataset = NikonDataset.ImageDataset(count=80, offset=0, slice_images=True)
-    train_loader = DataLoader(train_dataset, batch_size=10)
+    train_loader = DataLoader(train_dataset, batch_size=10, shuffle=True)
     trainer = Trainer(model, learning_rate=0.001, epochs=50, force_gpu=args.gpu)
     losses = trainer.train_model(train_loader)
     torch.save(model.state_dict(), f"./{args.out_name}")
