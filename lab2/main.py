@@ -16,7 +16,7 @@ def main(arguments):
 
     parser.add_argument("-d", action="store_true")
     parser.add_argument("--display_nikon_comp", action="store_true")
-    parser.add_argument("--gpu", action="store_true", help="Wymuś uruchomienie na GPU (CUDA)")
+    parser.add_argument("--gpu", action="store_true", help="Enforce GPU use (CUDA)")
     parser.add_argument("--model", type=str, default="nafnet")
     parser.add_argument("--naf_down", type=list, default=[1,1,1,8])
     parser.add_argument("--naf_up", type=list, default=[1,1,1,1])

@@ -8,7 +8,7 @@ class Trainer:
     def __init__(self, model: nn.Module, learning_rate, epochs, force_gpu=False):
         self.model = model
         if force_gpu and not torch.cuda.is_available():
-            raise RuntimeError("Wymuszono użycie GPU (--gpu), ale CUDA nie jest dostępna!")
+            raise RuntimeError("Enforced GPU use (--gpu), but CUDA is not available")
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"Device used: {self.device}")
         self.model.to(self.device)
