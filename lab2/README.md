@@ -27,6 +27,8 @@ uv run main.py --gpu
 
 ## Wyniki
 
+### Wizualizacja
+![alt text](image.png)
 ### Pierwsze podejście
 
 Funkcja straty to po prostu L1.
