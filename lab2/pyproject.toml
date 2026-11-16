@@ -1,0 +1,36 @@
+[project]
+name = "lab2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ksokol", email = "01178595@pw.edu.pl" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "lpips>=0.1.4",
+    "matplotlib>=3.11.2",
+    "rawpy>=0.28.0",
+    "requests>=2.34.2",
+    "tabulate>=0.10.0",
+    "torch>=2.15.0",
+    "torchmetrics>=1.9.0",
+    "torchvision>=0.29.2",
+]
+
+[project.scripts]
+lab2 = "lab2:main"
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cuda", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+torchvision = [
+    { index = "pytorch-cuda", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
